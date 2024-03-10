@@ -1,0 +1,6 @@
+* Jan 2019: the SigmaProfileCalculator.m contains a bug for variable "Term3". Replace "Term3" as "Term3=Term2/Sigma(j)". 
+Reported by Dr. Reza Farahipour, reza.farahipour@ucdenver.edu 
+
+Recommended to visit: 
+https://www.design.che.vt.edu 
+https://pubs.acs.org/doi/10.1021/acs.jctc.9b01016   
