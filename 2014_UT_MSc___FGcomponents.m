@@ -1,0 +1,33 @@
+function [Q1 Q2 S1 S2]=FGcomponents(ijOMG1,ijOMG2,jIter,iIter)
+% Calculuate the components needed for gradient of chemical potential
+% That is, Q1, Q2, S1, and S2.
+% Subroutines :::
+%               CONSTANTS.m
+%               PHIs.m
+%               UorH.m
+%               FLORYHOGGINSCOEFF.m
+% help on
+% Loading CONSTANTS.m
+[V12 V21 V13 V23]=CONSTANTS();
+% Loading PHIs.m
+[PHI1 PHI2 PHI3]=PHIs(ijOMG1,ijOMG2,jIter,iIter);
+% Loading UorH.m
+[U1 U2]=UorH(ijOMG1,ijOMG2,jIter,iIter);
+% Loading FLORYHOGGINSCOEFF.m
+[G12 G23 G13 DG12 DG23 DG13 DDG12 ...
+    DDG23]=FLORYHOGGINSCOEFF(ijOMG1,ijOMG2,jIter,iIter);
+% Calculating ....
+Q1=(1/PHI1)-1+V13+PHI2*(V12*G23-G12)-(PHI2+2*PHI3)*G13+...
+    (PHI1-2*U2)*(U2^2)*DG12+3*V12*PHI2*PHI3*DG23+...
+    U1*(U2^3)*DDG12+V12*PHI2*(PHI3^2)*DDG23;
+Q2=-V12+V13+(PHI2+PHI3)*(G12-G13)+V12*(PHI2-PHI3)*G23+...
+    U1*U2*(U2-U1-PHI1)*DG12+V12*PHI3*(3*PHI2-PHI3)*DG23-...
+    ((U1*U2)^2)*DDG12+V12*PHI2*(PHI3^2)*DDG23;
+S1=-V21+V23+(PHI1+PHI3)*(V21*G12-G23)+V21*(PHI1-PHI3)*G13+...
+    V21*U1*U2*(PHI2+U2-U1)*DG12+PHI3*(3*PHI2-1)*DG23-...
+    V21*((U1*U2)^2)*DDG12+PHI2*(PHI3^2)*DDG23;
+S2=(1/PHI2)-1+V23+V21*PHI1*(G13-G12)-(PHI1+2*PHI3)*G13+...
+    V21*(U1^2)*(2*U1-PHI2)*DG12+PHI3*(4*PHI2+PHI1-2)*DG23+...
+    V21*(U1^3)*U2*DDG12+PHI2*(PHI3^2)*DDG23;
+end
+% End of nested m-file.
