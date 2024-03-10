@@ -1,0 +1,21 @@
+Basis_version v4.0.0
+# Environmental Keywords
+Cosmo on
+Cosmo_Grid_Size 1082
+Cosmo_Segments 92
+Cosmo_Solvent_Radius 1.300000
+Cosmo_A-Matrix_Cutoff 7.000000
+Cosmo_Radius_Incr 0.000000
+Cosmo_A-constant 	1.882190
+Cosmo_B-constant 	0.010140
+Cosmo_RadCorr_Incr 0.150000
+Cosmo_Atomic_Radii
+ 1 1.300000
+ 6 2.000000
+ 7 1.830000
+ 9 1.720000
+15 2.120000
+16 2.160000
+17 2.050000
+35 2.160000
+53 2.320000
