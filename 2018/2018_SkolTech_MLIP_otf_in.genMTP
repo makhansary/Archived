@@ -1,0 +1,30 @@
+# lmpRX
+# settings/definitions
+units metal
+dimension 3
+atom_style atomic
+boundary p p p
+# read configuration from data file
+read_data data.cfgs
+mass 1 12.01
+# MLIP library 
+pair_style mlip ../../../../src/mlip/genMTP.ini
+pair_coeff * *
+neighbor 1.5 bin
+# initializing velocities - once @ T with a random number
+velocity all create 300 ${seed}
+# NVT Ensemble 
+fix nvtENS all nvt temp 300 300 0.001
+# Energy minimization 
+#variable etol equal 1.0e-5
+#variable ftol equal 1.0e-4
+#variable maxiter equal 1.0e3
+#variable maxeval equal 1.0e3
+#minimize $(v_etol) $(v_ftol) $(v_maxiter) $(v_maxeval)
+# to monitor progress 
+thermo 1
+dump dumps all custom 1 dumps/dump.* id x y z fx fy fz vx vy vz
+# MD run
+timestep 0.001 # 1 fs 
+run 10000  # 10 ps 
+# End 

@@ -1,0 +1,20 @@
+SYSTEM = C
+# electronic degrees
+ENCUT = 500 # as recommended by Ivan 
+LREAL = Auto #real space projection
+PREC  = Accurate  # Accurate
+EDIFF = 1E-6 # do not use default (too large drift)
+ISMEAR = -1   # Gaussian Smearing
+SIGMA = 0.172
+# KPOINTs as recommended by Ivan 
+KGAMMA = .TRUE.
+#KSPACING = 0.23
+KSPACING = 1
+#
+NCORE= 4 # one orbital on 4 cores
+ISYM = 0 # no symmetry
+SYMPREC=1.0E-8; # as per Ivan recommendation,  in order to avoid problems with symmetric configurations
+NELMIN = 4; # minimum 4 steps per time step, avoid breaking after 2 steps
+LCHARG = .FALSE.
+LWAVE = .FALSE.
+# End 

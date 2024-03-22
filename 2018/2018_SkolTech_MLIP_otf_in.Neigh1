@@ -1,0 +1,36 @@
+# lmpRX
+# settings/definitions
+units metal
+dimension 3
+atom_style atomic
+boundary p p p
+# read configuration from data file
+read_data data.cfgs
+replicate 5 5 5
+change_box all x final -15 30 y final -15 30 z final -15 30
+# 
+mass 1 12.01
+# MLIP library 
+pair_style mlip ../../../../src/mlip/Neigh1.ini
+pair_coeff * *
+neighbor 1.5 bin
+# initializing velocities - once @ T with a random number
+velocity all create 300 ${seed}
+# NVT Ensemble 
+#fix nvtENS all nvt temp 300 300 0.0001
+fix nveENS all nve
+# Energy minimization 
+#variable etol equal 1.0e-5
+#variable ftol equal 1.0e-4
+#variable maxiter equal 1.0e3
+#variable maxeval equal 1.0e3
+#minimize $(v_etol) $(v_ftol) $(v_maxiter) $(v_maxeval)
+# to monitor progress 
+#dump dumps all atom 1 dumps/dump.*
+thermo 1
+dump dumps all custom 1 dumps/dump.* id x y z fx fy fz vx vy vz
+#dump ID group-ID style N file args
+# MD run
+timestep 0.0005 # 1 fs 
+run 5 # 1 ps 
+# End 

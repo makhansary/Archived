@@ -1,0 +1,87 @@
+# - units: 
+units metal
+
+# mpi domain split optimization: 
+comm_style brick
+processors * * 1
+
+# - Relaxation convergence: 
+variable maxrelaxiter equal 1000 # iterations 
+variable maxEFScalcs equal 1000000 # iterations 
+variable etol equal 0.0
+variable ftol equal 0.001
+
+# - settings  
+variable dumpfreq equal 1 # output frequency 
+variable latticeparam equal 3.565 
+
+# - lattice 
+lattice diamond $(v_latticeparam) #orient z -1 -1 -1 orient y -1 0 1  orient x 1 -2 1
+variable Lx equal 20
+variable Ly equal 20
+variable Lz equal 20
+region wall block 0 $(v_Lx) 0 $(v_Ly) $(-0.01*v_Lz) $(0.01*v_Lz) side in units lattice
+region workmaterial block 0 $(v_Lx) 0 $(v_Ly) $(0.01*v_Lz) $(v_Lz) side in units lattice
+
+# - tip
+variable tipforce equal 100
+variable tipcutoff equal 5 # cutoff
+variable tipjump equal 0.05
+variable tipx equal $(0.5*v_Lx*v_latticeparam)
+variable tipy equal $(0.5*v_Ly*v_latticeparam)
+variable tipz equal $(v_Lz*v_latticeparam + v_tipcutoff) 
+
+# - simulation box 
+region System block -3 $(v_Lx + 3) -3 $(v_Ly + 3) -3 $(v_Lz+v_tipcutoff) side in units lattice
+boundary p p f
+create_box 1 System
+
+# - creating atoms
+create_atoms 1 region workmaterial 
+create_atoms 1 region wall
+mass 1 12.01 
+group workmaterialG region workmaterial
+group wallG region wall
+
+# - potential settings
+pair_style mlip mlip.ini
+pair_coeff * *
+neighbor 1.5 bin
+
+# - minimization settings
+min_style cg
+min_modify dmax 0.1
+
+# - run the process
+variable maxstps equal $((v_Lz + v_tipcutoff)/v_tipjump)
+
+# - output settings
+thermo 1
+#dump traj all custom $(v_dumpfreq) dumps/trj.* id x y z fx fy fz vx vy vz
+#write_dump all atom dump.all
+
+variable odometer equal 0
+print "depth       force" file force.txt
+write_dump all custom dumps/fnls.0 id x y z fx fy fz vx vy vz 
+
+label looop
+    variable ITER loop $(v_maxstps)
+    variable tipz equal $(v_tipz - v_tipjump)
+    variable odometer equal $(v_odometer + v_tipjump)
+    if "$(v_ITER) > 5" then "fix hold_$(v_ITER) wallG setforce 0 0 0" else "fix hold_$(v_ITER) wallG setforce NULL NULL 0"
+    fix Indenting_$(v_ITER) all indent $(v_tipforce) sphere $(v_tipx) $(v_tipy) $(v_tipz) $(v_tipcutoff) units box
+    fix_modify Indenting_$(v_ITER) energy yes
+    variable ITERout equal $(v_ITER)
+    thermo_style custom v_ITERout step v_odometer pe f_Indenting_$(v_ITER) fmax f_Indenting_$(v_ITER)[*]
+    minimize $(v_etol) $(v_ftol) $(v_maxrelaxiter) $(v_maxEFScalcs)
+    write_dump all custom dumps/fnls.$(v_ITER) id x y z fx fy fz vx vy vz 
+    variable tmp_force equal f_Indenting_$(v_ITER)[3]
+    print "$(v_odometer)           $(v_tmp_force)" append force.txt
+    unfix Indenting_$(v_ITER)
+    next ITER 
+jump SELF looop
+
+print end
+
+
+

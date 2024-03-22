@@ -1,0 +1,129 @@
+##################################################
+log log.min append
+# - units: 
+units metal
+atom_style atomic
+print '##########################################'
+# mpi domain split optimization: 
+comm_style brick
+processors * * 1
+print '##########################################'
+# - Relaxation convergence: 
+variable ITER equal 0 # iterations 
+variable etol equal 0.000000000000001
+variable ftol equal 0.0001
+variable eiter equal 100
+variable fiter equal 100
+print 'set relaxation convergence criteria'
+print '##########################################'
+# - settings  
+variable Sx equal 5.04408 # the spacing outputed by lammps
+variable Sy equal 5.04408
+variable Sz equal 3.5667
+#
+timestep 0.001
+variable seed equal 4928459
+variable temperature equal 600
+variable FreQ equal 1 # output frequency 
+variable abc equal 3.5667 
+variable apart equal 0.02 # initial distance of tip and workmaterial in A
+variable zjump equal 0.01 # moves -zjump- Angstrom every iteration
+print 'set initial settings'
+print '##########################################'
+# - lattice 
+lattice diamond $(v_abc) orient z 0 0 -1 orient y 1 1 0 orient x -1 1 0
+print 'set lattice'
+print '##########################################'
+# - workmaterial 
+variable Lx equal 7
+variable Ly equal 7
+variable Lz equal 5
+region wall block 0 $(v_Lx) 0 $(v_Ly) 0 $(0.01*v_Lz) side in units lattice
+region workmaterial block 0 $(v_Lx) 0 $(v_Ly) $(0.01*v_Lz) $(v_Lz) side in units lattice
+print 'defined workmaterial'
+print '##########################################'
+# - tip
+variable tipf equal 10000
+variable tiprad equal 5 # cutoff
+variable tipx equal $(0.5*v_Lx*v_Sx)
+variable tipy equal $(0.5*v_Ly*v_Sy)
+variable tipz equal $(v_Lz*v_Sz + v_tiprad + v_apart) 
+print 'defined tip'
+print '##########################################'
+# - simulation box 
+region System block $(-0.2*v_Lx) $(1.2*v_Lx) $(-0.2*v_Ly) $(1.2*v_Ly) $(-0.2*v_Lz) $(v_Lz+v_tiprad+2*v_apart) side in units lattice
+boundary p p f
+create_box 1 System
+print 'defined simulation box'
+print '##########################################'
+# - creating atoms
+create_atoms 1 region workmaterial 
+create_atoms 1 region wall
+mass 1 12.01 
+group workmaterialG region workmaterial
+group wallG region wall
+print 'created atoms in workmaterial'
+print '##########################################'
+# - potential settings
+pair_style mlip mlip.ini
+pair_coeff * *
+neighbor 1.5 bin
+print 'set potential to MLIP'
+#pair_style lj/cut 2.5
+#pair_coeff * * 1.0 1.0 2.5
+#print 'set potential to LJ'
+print '##########################################'
+variable tot equal $(ceil((v_Lz*v_Sz + v_tiprad + v_apart)/(v_zjump)))
+print 'set total simulation time - total moves'
+print '##########################################'
+# - MD+RelX --------- RelX only 
+# - Dyn: velocities 
+fix nvtENS all nvt temp $(v_temperature) $(v_temperature) 0.001
+print 'set NVT ensemble for all simulation box'
+dump Traj all custom $(v_FreQ*100) dumps/trj.* id x y z fx fy fz vx vy vz
+print 'set dump output parameters'
+print '##########################################'
+print 'enetering LOOP'
+label FOR
+if "$(v_ITER) < $(v_tot)" then &
+"variable currT equal step" &
+"print 'saved current timestep --- $(v_currT) and iteration is $(v_ITER)'" &
+"print '##########################################'" &
+"variable tipz equal $(v_tipz - v_zjump)" &
+"print 'set indenter and the new position of'" &
+"print '##########################################'" &
+"fix hold_$(v_ITER) wallG lineforce 1 1 0" &
+"print 'holding bottom layer'" &
+"print '##########################################'" &
+"fix Indenting_$(v_ITER) all indent $(v_tipf) sphere $(v_tipx) $(v_tipy) $(v_tipz) $(v_tiprad) units box" &
+"print 'set interaction of tip walls with atoms'" &
+"print '##########################################'" &
+"thermo_style custom step atoms temp pe press v_tipz fmax f_Indenting_$(v_ITER)[*] v_ITER" &
+"thermo $(v_FreQ)" &
+"print 'set thermo output parameters'" &
+"print '##########################################'" &
+"print 'now running minimization in time step $(v_currT)'" &
+"minimize $(v_etol) $(v_ftol) $(v_eiter) $(v_fiter)" &
+"min_style quickmin" &
+"print 'finished minimization in time step $(v_currT)'" &
+"print '##########################################'" &
+"unfix hold_$(v_ITER)" & 
+"unfix Indenting_$(v_ITER)" &
+"print '##########################################'" &
+"variable ITER equal $(v_ITER + 1)" &
+"jump SELF FOR" 
+print 'end of LOOP'
+##################################################
+##################################################
+##################################################
+##################################################
+#"print 'unfixing old fixes'" &
+#"print '##########################################'" &
+#"fix_modify nvtENS_$(v_ITER) energy yes" &
+#"print '##########################################'" &
+#"velocity all scale $(v_temperature) units box" &
+#"min_modify dmax 0.05" &
+#"variable maxF equal $(fmax)" &
+#"fix MIN_ctl_$(v_ITER) all halt 1 v_maxF < 0.0001" &
+#"print 'GLOBAL: Minimization will be terminated if fmax is lower than 0.0001 --- immediate occurance'" &
+#"unfix MIN_ctl_$(v_ITER)" &
